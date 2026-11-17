@@ -1,0 +1,15 @@
+{
+  "short_name": "Matrix5",
+  "name": "Matrix Ecosystem v5.0",
+  "icons": [
+    {
+      "src": "img/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "index.html",
+  "background_color": "#020804",
+  "theme_color": "#00ff66",
+  "display": "standalone"
+}

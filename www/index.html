@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+    <title>Matrix Ecosystem v5.0</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <div class="matrix-header">
+        <h1>MATRIX ECOSYSTEM <span class="version">v5.0-alpha</span></h1>
+        <div class="status-badge">SECURE_LINK // ACTIVE</div>
+    </div>
+    
+    <div class="dashboard-grid">
+        <div class="card active" onclick="toggleRadar()">
+            <h3>Radar (25m)</h3>
+            <p id="radarStatus">Status: TAP TO ACTIVATE</p>
+        </div>
+        <div class="card" onclick="triggerModule('HID')">
+            <h3>HID Ducky</h3>
+            <p>USB-OTG payload injection interface</p>
+        </div>
+        <div class="card" onclick="triggerModule('Neural')">
+            <h3>Neural Deck</h3>
+            <p>Focus state & token stream monitor</p>
+        </div>
+        <div class="card" onclick="triggerModule('Core')">
+            <h3>Termux Bridge</h3>
+            <p>Local subprocess IPC daemon</p>
+        </div>
+    </div>
+
+    <!-- Contenedor Visual del Radar -->
+    <div class="radar-container" id="radarDisplay">
+        <div class="radar-sweep"></div>
+        <div class="radar-center-dot"></div>
+        <div class="radar-blip" style="top: 30%; left: 70%;"></div>
+        <div class="radar-blip" style="top: 65%; left: 35%;"></div>
+    </div>
+
+    <div class="terminal-box" id="terminalLog">
+        [SYS_INIT] Matrix core online. Ready for tactical input...
+    </div>
+
+    <script src="js/index.js"></script>
+</body>
+</html>

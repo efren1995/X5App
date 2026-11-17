@@ -1,0 +1,128 @@
+body {
+    background-color: #020804;
+    color: #00ff66;
+    font-family: 'Courier New', monospace;
+    margin: 0;
+    padding: 15px;
+    box-sizing: border-box;
+}
+.matrix-header {
+    border-bottom: 1px solid #00ff66;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.matrix-header h1 {
+    font-size: 1.1rem;
+    margin: 0;
+    text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+}
+.version {
+    font-size: 0.65rem;
+    color: #008833;
+}
+.status-badge {
+    font-size: 0.6rem;
+    border: 1px solid #00ff66;
+    padding: 3px 6px;
+    background: rgba(0, 255, 102, 0.1);
+}
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+.card {
+    border: 1px solid #005522;
+    background: #010d05;
+    padding: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.card:active, .card.active {
+    background: #003311;
+    border-color: #00ff66;
+}
+.card h3 {
+    margin: 0 0 6px 0;
+    font-size: 0.9rem;
+    color: #00ff66;
+}
+.card p {
+    margin: 0;
+    font-size: 0.7rem;
+    color: #44aa66;
+}
+.radar-container {
+    position: relative;
+    width: 100%;
+    max-width: 260px;
+    height: 260px;
+    margin: 15px auto;
+    background: radial-gradient(circle, #011a08 0%, #000c03 70%, #000 100%);
+    border: 2px solid #00ff66;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
+    display: none;
+}
+.radar-container::before, .radar-container::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 0; right: 0;
+    height: 1px;
+    background: rgba(0, 255, 102, 0.25);
+}
+.radar-container::after {
+    top: 0; bottom: 0; left: 50%; width: 1px; height: auto;
+}
+.radar-center-dot {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 6px; height: 6px;
+    background: #00ff66;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 6px #00ff66;
+}
+.radar-blip {
+    position: absolute;
+    width: 6px; height: 6px;
+    background: #ff3333;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #ff3333;
+    animation: pulse-blip 1.5s infinite;
+}
+@keyframes pulse-blip {
+    0% { transform: scale(0.8); opacity: 0.4; }
+    50% { transform: scale(1.4); opacity: 1; }
+    100% { transform: scale(0.8); opacity: 0.4; }
+}
+.radar-sweep {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 130px; height: 130px;
+    border-top: 2px solid rgba(0, 255, 102, 0.8);
+    border-right: 2px solid transparent;
+    border-radius: 100% 0 0 0;
+    transform-origin: 0 0;
+    animation: sweep 3s linear infinite;
+}
+@keyframes sweep {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.terminal-box {
+    background: #000;
+    border: 1px solid #00441a;
+    padding: 10px;
+    font-size: 0.75rem;
+    height: 110px;
+    overflow-y: auto;
+    color: #00cc55;
+    box-shadow: inset 0 0 10px rgba(0, 255, 102, 0.1);
+}
