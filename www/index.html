@@ -8,39 +8,127 @@
 </head>
 <body>
     <div class="matrix-header">
-        <h1>MATRIX ECOSYSTEM <span class="version">v5.0-alpha</span></h1>
-        <div class="status-badge">SECURE_LINK // ACTIVE</div>
+        <h1>MATRIX ECOSYSTEM <span class="version">v5.0</span></h1>
+        <div class="status-badge">MULTI-TAB // READY</div>
     </div>
-    
-    <div class="dashboard-grid">
-        <div class="card active" onclick="toggleRadar()">
-            <h3>Radar (25m)</h3>
-            <p id="radarStatus">Status: TAP TO ACTIVATE</p>
+
+    <!-- Barra de Pestañas -->
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="openTab('tab-radar', this)">RADAR</button>
+        <button class="tab-btn" onclick="openTab('tab-apk', this)">APK/MOD</button>
+        <button class="tab-btn" onclick="openTab('tab-hid', this)">HID/ESP32</button>
+        <button class="tab-btn" onclick="openTab('tab-rfid', this)">RFID/NFC</button>
+        <button class="tab-btn" onclick="openTab('tab-bci', this)">BCI/CORE</button>
+        <button class="tab-btn" onclick="openTab('tab-bridge', this)">BRIDGE</button>
+    </div>
+
+    <!-- PESTAÑA 1: RADAR -->
+    <div id="tab-radar" class="tab-content active">
+        <div class="panel-header">
+            <h3>PROXIMITY RADAR (25m)</h3>
+            <button class="action-btn" id="radarBtn" onclick="toggleRadar()">ACTIVATE</button>
         </div>
-        <div class="card" onclick="triggerModule('HID')">
-            <h3>HID Ducky</h3>
-            <p>USB-OTG payload injection interface</p>
+        <div class="radar-container" id="radarDisplay">
+            <div class="radar-sweep"></div>
+            <div class="radar-center-dot"></div>
+            <div class="radar-blip" style="top: 28%; left: 68%;"></div>
+            <div class="radar-blip" style="top: 64%; left: 32%;"></div>
         </div>
-        <div class="card" onclick="triggerModule('Neural')">
-            <h3>Neural Deck</h3>
-            <p>Focus state & token stream monitor</p>
-        </div>
-        <div class="card" onclick="triggerModule('Core')">
-            <h3>Termux Bridge</h3>
-            <p>Local subprocess IPC daemon</p>
+        <div class="control-row">
+            <button class="sub-btn" onclick="logCmd('RADAR', 'Sweep frequency set to 2.4GHz / BLE')">FREQ: 2.4GHz</button>
+            <button class="sub-btn" onclick="logCmd('RADAR', 'Range calibrated to 25 meters')">RANGE: 25m</button>
         </div>
     </div>
 
-    <!-- Contenedor Visual del Radar -->
-    <div class="radar-container" id="radarDisplay">
-        <div class="radar-sweep"></div>
-        <div class="radar-center-dot"></div>
-        <div class="radar-blip" style="top: 30%; left: 70%;"></div>
-        <div class="radar-blip" style="top: 65%; left: 35%;"></div>
+    <!-- PESTAÑA 2: APK / MOBILE SECURITY -->
+    <div id="tab-apk" class="tab-content">
+        <div class="panel-header">
+            <h3>MOBILE SECURITY & APK TOOLS</h3>
+        </div>
+        <div class="module-list">
+            <div class="module-item" onclick="logCmd('APK', 'Listing user-installed packages via pm list...')">
+                <strong>Extract Installed APK</strong>
+                <span>Pull base.apk from /data/app via Shizuku/Termux</span>
+            </div>
+            <div class="module-item" onclick="logCmd('APK', 'Decompiling AndroidManifest.xml & permissions...')">
+                <strong>Manifest & Permission Inspector</strong>
+                <span>Analyze exported activities, services & receivers</span>
+            </div>
+            <div class="module-item" onclick="logCmd('APK', 'Repackaging & signing with debug keystore...')">
+                <strong>APK Signer & Repacker</strong>
+                <span>Zipalign + apksigner v2/v3 verification</span>
+            </div>
+        </div>
     </div>
 
+    <!-- PESTAÑA 3: HID DUCKY & ESP32 -->
+    <div id="tab-hid" class="tab-content">
+        <div class="panel-header">
+            <h3>USB HID & ESP32 S3 PAYLOADS</h3>
+        </div>
+        <textarea id="duckyScript" class="code-input" rows="5">DELAY 1000
+GUI r
+DELAY 500
+STRING cmd
+ENTER</textarea>
+        <div class="control-row">
+            <button class="action-btn" onclick="runDucky()">INJECT HID</button>
+            <button class="sub-btn" onclick="logCmd('ESP32', 'Exported payload.bin for LilyGo T-Dongle-S3')">EXPORT ESP32</button>
+        </div>
+    </div>
+
+    <!-- PESTAÑA 4: CHAMELEON ULTRA v4 / RFID & MIFARE -->
+    <div id="tab-rfid" class="tab-content">
+        <div class="panel-header">
+            <h3>CHAMELEON ULTRA v4 // RFID & NFC</h3>
+        </div>
+        <div class="control-row">
+            <button class="action-btn" onclick="logCmd('RFID', 'Scanning HF 13.56MHz & LF 125kHz fields...')">SCAN TAG</button>
+            <button class="sub-btn" onclick="logCmd('CHAMELEON', 'Slot #1 Emulation Active (UID: 04:A2:89:1F)')">EMULATE SLOT 1</button>
+        </div>
+        <div class="module-list">
+            <div class="module-item" onclick="logCmd('MIFARE', 'Running Darkside / Nested Nonce Attack on Sector 0...')">
+                <strong>Mifare Classic Nonce Attack</strong>
+                <span>Key recovery via nested/hardnested & darkside</span>
+            </div>
+            <div class="module-item" onclick="logCmd('RFID', 'Dumping tag memory blocks to dump.mfd...')">
+                <strong>Dump & Clone Memory</strong>
+                <span>Read/Write 1K & 4K sectors via BLE/USB</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑA 5: BRAIN2QWERTY / BCI NEURAL -->
+    <div id="tab-bci" class="tab-content">
+        <div class="panel-header">
+            <h3>BRAIN2QWERTY // BCI DECODER</h3>
+        </div>
+        <div class="module-list">
+            <div class="module-item" onclick="logCmd('BCI', 'Loaded neural decoding config: model.yaml (gemma-4-31b-qat)')">
+                <strong>Neural Config (model.yaml)</strong>
+                <span>Active EEG/MEG sequence-to-text decoding pipeline</span>
+            </div>
+            <div class="module-item" onclick="logCmd('BCI', 'Calibrating signal-to-noise ratio & token beam search...')">
+                <strong>Signal Calibration & Stream</strong>
+                <span>Real-time keystroke probability & latency monitor</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑA 6: TERMUX BRIDGE -->
+    <div id="tab-bridge" class="tab-content">
+        <div class="panel-header">
+            <h3>TERMUX IPC BRIDGE</h3>
+        </div>
+        <div class="control-row">
+            <input type="text" id="ipcInput" class="text-input" placeholder="Enter command (e.g., adb devices)...">
+            <button class="action-btn" onclick="sendBridgeCmd()">EXEC</button>
+        </div>
+    </div>
+
+    <!-- Consola Global Inferior -->
     <div class="terminal-box" id="terminalLog">
-        [SYS_INIT] Matrix core online. Ready for tactical input...
+        [SYS_INIT] Matrix Ecosystem v5.0 loaded. 6 modules ready.
     </div>
 
     <script src="js/index.js"></script>
