@@ -109,5 +109,5 @@ class BridgeHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         return
 
-print("[BRIDGE_DAEMON] Real-Time RF Radar & IPC server listening on 127.0.0.1:8080...")
-HTTPServer(('127.0.0.1', 8080), BridgeHandler).serve_forever()
+print("[BRIDGE_DAEMON] Real-Time RF Radar & IPC server listening on 0.0.0.0:8080...")
+HTTPServer(('0.0.0.0', 8080), BridgeHandler).serve_forever()
