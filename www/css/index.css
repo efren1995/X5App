@@ -205,3 +205,24 @@ body {
     padding: 10px 8px;
     text-align: center;
 }
+
+/* Telemetría y Blips Reales */
+.telemetry-bar {
+    text-align: center;
+    font-size: 0.7rem;
+    color: #00ff66;
+    background: #011408;
+    border: 1px solid #00441a;
+    padding: 5px;
+    margin-top: 6px;
+    border-radius: 3px;
+}
+.blip-label {
+    position: absolute;
+    font-size: 0.52rem;
+    color: #ff6666;
+    white-space: nowrap;
+    transform: translate(8px, -4px);
+    text-shadow: 0 0 4px #000;
+    pointer-events: none;
+}

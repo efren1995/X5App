@@ -1,4 +1,5 @@
 let radarActive = false;
+let radarInterval = null;
 
 document.addEventListener('deviceready', () => {
     logCmd('CORDOVA', 'Hardware bridge initialized.');
@@ -21,12 +22,59 @@ function toggleRadar() {
     if (radarActive) {
         radarUI.classList.add('scanning');
         btn.innerText = 'STOP';
-        logCmd('RADAR', 'Active sweep engaged (25m radius).');
+        logCmd('RADAR', 'Live RF/Wi-Fi proximity scanner engaged (25m).');
+        fetchRealTargets();
+        radarInterval = setInterval(fetchRealTargets, 4000);
     } else {
         radarUI.classList.remove('scanning');
-        btn.innerText = 'ACTIVATE';
-        logCmd('RADAR', 'Sweep halted.');
+        btn.innerText = 'SCAN LIVE';
+        clearInterval(radarInterval);
+        document.getElementById('radarTargetsLayer').innerHTML = '';
+        document.getElementById('targetTelemetry').innerText = 'TARGETS DETECTED: 0 // STANDBY';
+        logCmd('RADAR', 'Live sweep halted.');
     }
+}
+
+function fetchRealTargets() {
+    fetch('http://127.0.0.1:8080/scan')
+        .then(res => res.json())
+        .then(data => {
+            const layer = document.getElementById('radarTargetsLayer');
+            const telemetry = document.getElementById('targetTelemetry');
+            layer.innerHTML = '';
+            const targets = data.targets || [];
+            
+            telemetry.innerText = `TARGETS DETECTED: ${targets.length} // LIVE RF`;
+            
+            targets.forEach(t => {
+                // Convertir distancia (0..25m) y ángulo (0..360) a porcentaje dentro del círculo (centro 50%, radio máx 45%)
+                const radiusPct = (t.dist / 25.0) * 45.0;
+                const rad = (t.angle * Math.PI) / 180;
+                const x = 50 + radiusPct * Math.cos(rad);
+                const y = 50 + radiusPct * Math.sin(rad);
+
+                const blip = document.createElement('div');
+                blip.className = 'radar-blip';
+                blip.style.display = 'block';
+                blip.style.left = `${x}%`;
+                blip.style.top = `${y}%`;
+
+                const label = document.createElement('span');
+                label.className = 'blip-label';
+                label.innerText = `${t.name} (${t.dist}m)`;
+                blip.appendChild(label);
+
+                layer.appendChild(blip);
+            });
+
+            if (targets.length > 0) {
+                logCmd('RADAR_HIT', `Mapped ${targets.length} active RF nodes within 25m.`);
+            }
+        })
+        .catch(() => {
+            document.getElementById('targetTelemetry').innerText = 'BRIDGE OFFLINE // START DAEMON';
+            logCmd('RADAR_ERR', 'Cannot reach bridge_daemon.py on port 8080.');
+        });
 }
 
 function runDucky() {

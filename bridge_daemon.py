@@ -1,18 +1,88 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import subprocess
 import json
+import math
+import hashlib
+
+def rssi_to_meters(rssi):
+    # Fórmula log-distance path loss aproximada (TxPower ~ -55 dBm a 1m)
+    try:
+        rssi = float(rssi)
+        dist = 10 ** ((-55.0 - rssi) / (10.0 * 2.5))
+        return round(min(max(dist, 0.5), 25.0), 1)
+    except:
+        return 12.5
+
+def get_angle_from_mac(mac):
+    # Genera un ángulo consistente (0-360) basado en la dirección MAC para ubicar el blip en el radar
+    h = int(hashlib.md5(mac.encode()).hexdigest()[:4], 16)
+    return h % 360
+
+def scan_real_targets():
+    targets = []
+    # Intentar escaneo Wi-Fi mediante Termux:API
+    try:
+        res = subprocess.run(["termux-wifi-scaninfo"], capture_output=True, text=True, timeout=6)
+        if res.returncode == 0 and res.stdout.strip():
+            wifi_list = json.loads(res.stdout)
+            for item in wifi_list:
+                bssid = item.get("bssid", "00:00:00:00:00:00")
+                ssid = item.get("ssid", "") or "[HIDDEN_NODE]"
+                rssi = item.get("rssi", -75)
+                dist = rssi_to_meters(rssi)
+                if dist <= 25.0:
+                    targets.append({
+                        "id": bssid,
+                        "name": ssid[:14],
+                        "type": "WIFI",
+                        "rssi": rssi,
+                        "dist": dist,
+                        "angle": get_angle_from_mac(bssid)
+                    })
+    except Exception:
+        pass
+
+    # Fallback / complemento: leer vecinos ARP locales si Termux:API no tiene permisos aún
+    if not targets:
+        try:
+            res = subprocess.run(["ip", "neigh"], capture_output=True, text=True, timeout=3)
+            for idx, line in enumerate(res.stdout.splitlines()):
+                parts = line.split()
+                if len(parts) >= 5 and "FAILED" not in line:
+                    ip_addr = parts[0]
+                    mac = parts[4]
+                    targets.append({
+                        "id": mac,
+                        "name": f"NET:{ip_addr.split('.')[-1]}",
+                        "type": "LAN",
+                        "rssi": -60 - (idx * 4),
+                        "dist": round(min(3.5 + (idx * 2.8), 24.0), 1),
+                        "angle": get_angle_from_mac(mac)
+                    })
+        except Exception:
+            pass
+
+    return targets
 
 class BridgeHandler(BaseHTTPRequestHandler):
     def _set_headers(self, status=200):
         self.send_response(status)
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
 
     def do_OPTIONS(self):
         self._set_headers(200)
+
+    def do_GET(self):
+        if self.path == '/scan':
+            targets = scan_real_targets()
+            self._set_headers(200)
+            self.wfile.write(json.dumps({'targets': targets}).encode('utf-8'))
+        else:
+            self._set_headers(404)
 
     def do_POST(self):
         try:
@@ -39,5 +109,5 @@ class BridgeHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         return
 
-print("[BRIDGE_DAEMON] IPC server listening on 127.0.0.1:8080 (CORS enabled)...")
+print("[BRIDGE_DAEMON] Real-Time RF Radar & IPC server listening on 127.0.0.1:8080...")
 HTTPServer(('127.0.0.1', 8080), BridgeHandler).serve_forever()

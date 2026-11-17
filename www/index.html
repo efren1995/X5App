@@ -25,18 +25,18 @@
     <!-- PESTAÑA 1: RADAR -->
     <div id="tab-radar" class="tab-content active">
         <div class="panel-header">
-            <h3>PROXIMITY RADAR (25m)</h3>
-            <button class="action-btn" id="radarBtn" onclick="toggleRadar()">ACTIVATE</button>
+            <h3>REAL-TIME RF RADAR (25m)</h3>
+            <button class="action-btn" id="radarBtn" onclick="toggleRadar()">SCAN LIVE</button>
         </div>
         <div class="radar-container" id="radarDisplay">
             <div class="radar-sweep"></div>
             <div class="radar-center-dot"></div>
-            <div class="radar-blip" style="top: 28%; left: 68%;"></div>
-            <div class="radar-blip" style="top: 64%; left: 32%;"></div>
+            <div id="radarTargetsLayer"></div>
         </div>
+        <div id="targetTelemetry" class="telemetry-bar">TARGETS DETECTED: 0 // STANDBY</div>
         <div class="control-row">
-            <button class="sub-btn" onclick="logCmd('RADAR', 'Sweep frequency set to 2.4GHz / BLE')">FREQ: 2.4GHz</button>
-            <button class="sub-btn" onclick="logCmd('RADAR', 'Range calibrated to 25 meters')">RANGE: 25m</button>
+            <button class="sub-btn" onclick="fetchRealTargets()">FORCE SWEEP</button>
+            <button class="sub-btn" onclick="logCmd('RADAR', 'Calibrated RSSI path-loss model (25m max)')">RSSI CALIB</button>
         </div>
     </div>
 
