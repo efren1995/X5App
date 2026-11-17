@@ -193,3 +193,15 @@ body {
     overflow-y: auto;
     color: #00cc55;
 }
+
+/* Cuadrícula de Macros Rápidas en Bridge */
+.macro-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+}
+.macro-grid .sub-btn {
+    padding: 10px 8px;
+    text-align: center;
+}

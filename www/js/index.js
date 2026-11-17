@@ -34,11 +34,35 @@ function runDucky() {
     logCmd('HID', `Queued ${lines.length} DuckyScript instructions for USB-OTG injection.`);
 }
 
+function execQuickCmd(command) {
+    const input = document.getElementById('ipcInput');
+    input.value = command;
+    sendBridgeCmd();
+}
+
 function sendBridgeCmd() {
     const input = document.getElementById('ipcInput');
-    if (!input.value.trim()) return;
-    logCmd('IPC_EXEC', '$ ' + input.value.trim());
+    const cmd = input.value.trim();
+    if (!cmd) return;
+
+    logCmd('IPC_REQ', '$ ' + cmd);
     input.value = '';
+
+    fetch('http://127.0.0.1:8080', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cmd: cmd })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const lines = data.output.split('\n');
+        lines.forEach(line => {
+            if (line.trim()) logCmd('IPC_RES', line);
+        });
+    })
+    .catch(() => {
+        logCmd('IPC_ERR', 'Connection refused. Run: python3 bridge_daemon.py &');
+    });
 }
 
 function logCmd(tag, msg) {

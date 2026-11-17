@@ -124,6 +124,17 @@ ENTER</textarea>
             <input type="text" id="ipcInput" class="text-input" placeholder="Enter command (e.g., adb devices)...">
             <button class="action-btn" onclick="sendBridgeCmd()">EXEC</button>
         </div>
+        <div class="panel-header" style="margin-top: 12px;">
+            <h3>QUICK MACROS</h3>
+        </div>
+        <div class="macro-grid">
+            <button class="sub-btn" onclick="execQuickCmd('git status -s')">GIT STATUS</button>
+            <button class="sub-btn" onclick="execQuickCmd('git add . && git commit -m "sync" && git push origin main')">GIT PUSH</button>
+            <button class="sub-btn" onclick="execQuickCmd('uname -m && free -m | grep Mem')">SYS INFO</button>
+            <button class="sub-btn" onclick="execQuickCmd('./apk_automator.sh')">LIST APKS</button>
+            <button class="sub-btn" onclick="execQuickCmd('adb devices')">ADB DEVICES</button>
+            <button class="sub-btn" onclick="execQuickCmd('ps aux | grep python3')">DAEMON PID</button>
+        </div>
     </div>
 
     <!-- Consola Global Inferior -->
