@@ -1,11 +1,16 @@
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import subprocess
 import json
 import math
 import hashlib
+import time
+
+# Variables de caché para evitar sobrecargar la antena Wi-Fi y ahorrar batería
+_cached_targets = []
+_last_scan_time = 0
+CACHE_TTL = 4.0  # Segundos de validez para la caché de escaneo
 
 def rssi_to_meters(rssi):
-    # Fórmula log-distance path loss aproximada (TxPower ~ -55 dBm a 1m)
     try:
         rssi = float(rssi)
         dist = 10 ** ((-55.0 - rssi) / (10.0 * 2.5))
@@ -14,15 +19,19 @@ def rssi_to_meters(rssi):
         return 12.5
 
 def get_angle_from_mac(mac):
-    # Genera un ángulo consistente (0-360) basado en la dirección MAC para ubicar el blip en el radar
     h = int(hashlib.md5(mac.encode()).hexdigest()[:4], 16)
     return h % 360
 
 def scan_real_targets():
+    global _cached_targets, _last_scan_time
+    now = time.time()
+    if now - _last_scan_time < CACHE_TTL:
+        return _cached_targets
+
     targets = []
-    # Intentar escaneo Wi-Fi mediante Termux:API
+    # Escaneo Wi-Fi optimizado con timeout estricto de 2.5s
     try:
-        res = subprocess.run(["termux-wifi-scaninfo"], capture_output=True, text=True, timeout=6)
+        res = subprocess.run(["termux-wifi-scaninfo"], capture_output=True, text=True, timeout=2.5)
         if res.returncode == 0 and res.stdout.strip():
             wifi_list = json.loads(res.stdout)
             for item in wifi_list:
@@ -42,10 +51,10 @@ def scan_real_targets():
     except Exception:
         pass
 
-    # Fallback / complemento: leer vecinos ARP locales si Termux:API no tiene permisos aún
+    # Fallback ARP local si no hay datos Wi-Fi
     if not targets:
         try:
-            res = subprocess.run(["ip", "neigh"], capture_output=True, text=True, timeout=3)
+            res = subprocess.run(["ip", "neigh"], capture_output=True, text=True, timeout=1.5)
             for idx, line in enumerate(res.stdout.splitlines()):
                 parts = line.split()
                 if len(parts) >= 5 and "FAILED" not in line:
@@ -62,6 +71,8 @@ def scan_real_targets():
         except Exception:
             pass
 
+    _cached_targets = targets
+    _last_scan_time = now
     return targets
 
 class BridgeHandler(BaseHTTPRequestHandler):
@@ -96,10 +107,10 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({'output': 'Error: Empty command'}).encode('utf-8'))
                 return
 
-            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=15)
             output = result.stdout if result.returncode == 0 else result.stderr
             if not output.strip():
-                output = "[INFO] Command executed successfully (no stdout)."
+                output = "[INFO] Command executed successfully."
         except Exception as e:
             output = f"[ERROR] Execution failed: {str(e)}"
             
@@ -107,7 +118,9 @@ class BridgeHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps({'output': output}).encode('utf-8'))
 
     def log_message(self, format, *args):
+        # Silenciar logs en consola para ahorrar recursos de E/S y batería
         return
 
-print("[BRIDGE_DAEMON] Real-Time RF Radar & IPC server listening on 0.0.0.0:8080...")
-HTTPServer(('0.0.0.0', 8080), BridgeHandler).serve_forever()
+print("[OPTIMIZED_DAEMON] Low-power IPC server listening on 127.0.0.1:8080...")
+server = ThreadingHTTPServer(('127.0.0.1', 8080), BridgeHandler)
+server.serve_forever()
