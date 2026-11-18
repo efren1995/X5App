@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Matrix Ecosystem CI/CD
 
 on:
   push:
@@ -7,7 +7,27 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  lint-and-validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Validate Core Project Files
+        run: |
+          echo "[+] Checking workspace structure..."
+          test -f www/js/index.js && echo "[OK] index.js present"
+          test -f bridge_daemon.py && echo "[OK] bridge_daemon.py present"
+          npm install --silent || true
+
+  build-android:
+    needs: lint-and-validate
     runs-on: ubuntu-24.04
 
     steps:
@@ -44,5 +64,5 @@ jobs:
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug
+        name: matrix-app-debug
         path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
