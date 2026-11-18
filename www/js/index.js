@@ -1,8 +1,9 @@
 let radarActive = false;
 let radarInterval = null;
+let knownTargets = new Set(); // Para rastrear dispositivos ya notificados
 
 document.addEventListener('deviceready', () => {
-    logCmd('CORDOVA', 'Hardware bridge initialized.');
+    logCmd('CORDOVA', 'Hardware bridge initialized with local notifications.');
 }, false);
 
 function openTab(tabId, btnElement) {
@@ -22,7 +23,8 @@ function toggleRadar() {
     if (radarActive) {
         radarUI.classList.add('scanning');
         btn.innerText = 'STOP';
-        logCmd('RADAR', 'Proximity scanner engaged (25m radius).');
+        knownTargets.clear();
+        logCmd('RADAR', 'Proximity scanner & real-time alerts engaged (25m).');
         fetchRealTargets();
         radarInterval = setInterval(fetchRealTargets, 4000);
     } else {
@@ -36,18 +38,15 @@ function toggleRadar() {
 }
 
 function fetchRealTargets() {
-    // Intentar consultar al demonio local en Termux
     fetch('http://127.0.0.1:8080/scan', { mode: 'cors' })
         .then(res => res.json())
         .then(data => {
             renderRadarTargets(data.targets || []);
         })
         .catch(() => {
-            // Fallback táctico local si el demonio no responde en este ciclo
             const fallbackTargets = [
                 { id: 'BLE_01', name: 'ESP32_NODE', dist: 4.2, angle: 45 },
-                { id: 'WIFI_02', name: 'TARGET_AP', dist: 12.8, angle: 160 },
-                { id: 'BLE_03', name: 'CHAMELEON_U', dist: 2.1, angle: 280 }
+                { id: 'WIFI_02', name: 'TARGET_AP', dist: 12.8, angle: 160 }
             ];
             renderRadarTargets(fallbackTargets);
             document.getElementById('targetTelemetry').innerText = `TARGETS DETECTED: ${fallbackTargets.length} // LOCAL FALLBACK`;
@@ -62,6 +61,12 @@ function renderRadarTargets(targets) {
     telemetry.innerText = `TARGETS DETECTED: ${targets.length} // ACTIVE RF`;
     
     targets.forEach(t => {
+        // Verificar si es un dispositivo NUEVO que no estaba en el radar anterior
+        if (!knownTargets.has(t.id)) {
+            knownTargets.add(t.id);
+            triggerProximityAlert(t);
+        }
+
         const radiusPct = (t.dist / 25.0) * 45.0;
         const rad = (t.angle * Math.PI) / 180;
         const x = 50 + radiusPct * Math.cos(rad);
@@ -80,6 +85,22 @@ function renderRadarTargets(targets) {
 
         layer.appendChild(blip);
     });
+}
+
+function triggerProximityAlert(target) {
+    logCmd('ALERT', `New target intercepted: ${target.name} at ${target.dist}m!`);
+    
+    // Disparar notificación nativa si cordova.plugins está disponible
+    if (window.cordova && window.cordova.plugins && window.cordova.plugins.notification) {
+        cordova.plugins.notification.local.schedule({
+            id: Math.floor(Math.random() * 100000),
+            title: '¡Nuevo Dispositivo Detectado!',
+            text: `${target.name} detectado a ${target.dist}m en el radar.`,
+            sound: 'file://beep.caf',
+            vibrate: true,
+            foreground: true
+        });
+    }
 }
 
 function runDucky() {
