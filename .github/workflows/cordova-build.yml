@@ -32,13 +32,14 @@ jobs:
     - name: Install Dependencies
       run: npm install
 
-    - name: Clean and Add Android Platform
+    - name: Force Clean and Prepare Android Platform
       run: |
-        rm -rf platforms plugins
-        cordova platform add android
+        npx cordova platform rm android || true
+        rm -rf platforms/android
+        npx cordova platform add android --save
 
     - name: Build Debug APK
-      run: cordova build android --debug
+      run: npx cordova build android --debug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
