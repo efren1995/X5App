@@ -145,3 +145,48 @@ function logCmd(tag, msg) {
     term.innerHTML += `<br>[${time}] [${tag}] ${msg}`;
     term.scrollTop = term.scrollHeight;
 }
+
+
+function updateRadarBlips(targets) {
+    const radarContainer = document.querySelector('.radar-container');
+    if (!radarContainer) return;
+    
+    const existingBlips = radarContainer.querySelectorAll('.radar-blip');
+    existingBlips.forEach(b => b.remove());
+
+    targets.forEach(target => {
+        const maxDist = 25.0;
+        const radiusPx = 100;
+        const distRatio = Math.min(target.dist / maxDist, 1.0);
+        const distancePx = distRatio * radiusPx;
+        
+        const angleRad = (target.angle - 90) * (Math.PI / 180);
+        const x = 120 + distancePx * Math.cos(angleRad);
+        const y = 120 + distancePx * Math.sin(angleRad);
+
+        const blip = document.createElement('div');
+        blip.className = 'radar-blip';
+        blip.style.left = `${x}px`;
+        blip.style.top = `${y}px`;
+        blip.style.display = 'block';
+
+        const label = document.createElement('div');
+        label.className = 'blip-label';
+        label.textContent = `${target.name} [${target.dist}m]`;
+        blip.appendChild(label);
+
+        radarContainer.appendChild(blip);
+    });
+}
+
+function pollRadar() {
+    fetch('http://127.0.0.1:8080/scan')
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.targets) {
+                updateRadarBlips(data.targets);
+            }
+        })
+        .catch(err => console.log('Radar scan offline'));
+}
+setInterval(pollRadar, 4000);

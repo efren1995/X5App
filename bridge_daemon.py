@@ -1,14 +1,12 @@
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import subprocess
 import json
-import math
 import hashlib
 import time
 
-# Variables de caché para evitar sobrecargar la antena Wi-Fi y ahorrar batería
 _cached_targets = []
 _last_scan_time = 0
-CACHE_TTL = 4.0  # Segundos de validez para la caché de escaneo
+CACHE_TTL = 4.0
 
 def rssi_to_meters(rssi):
     try:
@@ -29,7 +27,6 @@ def scan_real_targets():
         return _cached_targets
 
     targets = []
-    # Escaneo Wi-Fi optimizado con timeout estricto de 2.5s
     try:
         res = subprocess.run(["termux-wifi-scaninfo"], capture_output=True, text=True, timeout=2.5)
         if res.returncode == 0 and res.stdout.strip():
@@ -51,7 +48,6 @@ def scan_real_targets():
     except Exception:
         pass
 
-    # Fallback ARP local si no hay datos Wi-Fi
     if not targets:
         try:
             res = subprocess.run(["ip", "neigh"], capture_output=True, text=True, timeout=1.5)
@@ -62,7 +58,7 @@ def scan_real_targets():
                     mac = parts[4]
                     targets.append({
                         "id": mac,
-                        "name": f"NET:{ip_addr.split('.')[-1]}",
+                        "name": f"NET:{ip_addr.split(".")[-1]}",
                         "type": "LAN",
                         "rssi": -60 - (idx * 4),
                         "dist": round(min(3.5 + (idx * 2.8), 24.0), 1),
@@ -101,24 +97,16 @@ class BridgeHandler(BaseHTTPRequestHandler):
             post_data = self.rfile.read(content_length)
             data = json.loads(post_data.decode('utf-8'))
             command = data.get('cmd', '')
-            
-            if not command:
-                self._set_headers(400)
-                self.wfile.write(json.dumps({'output': 'Error: Empty command'}).encode('utf-8'))
-                return
-
             result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=15)
             output = result.stdout if result.returncode == 0 else result.stderr
             if not output.strip():
                 output = "[INFO] Command executed successfully."
         except Exception as e:
             output = f"[ERROR] Execution failed: {str(e)}"
-            
         self._set_headers(200)
         self.wfile.write(json.dumps({'output': output}).encode('utf-8'))
 
     def log_message(self, format, *args):
-        # Silenciar logs en consola para ahorrar recursos de E/S y batería
         return
 
 print("[OPTIMIZED_DAEMON] Low-power IPC server listening on 127.0.0.1:8080...")
